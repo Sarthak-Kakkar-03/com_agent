@@ -11,3 +11,4 @@ class OverallState(TypedDict):
     email: str
     display_messages: List[str]
     counter: int
+    latest_info: str
