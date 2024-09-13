@@ -21,7 +21,7 @@ supervisor_llm = ChatOpenAI(
 class SupervisorResponse(BaseModel):
     supervisor_message: str = Field(description="Detailed instruction about the message/task to send to the next agent")
     next: str = Field(description="enum: MAIL, INFO, or MESSAGE")
-    display_message: str = Field(description="Message to display the employer in the conversation, detailing which agent you delegated the action to and why")
+    display_message: str = Field(description="Short/Concise message to display the employer in the conversation, detailing which agent you delegated the action to and why")
 
 
 supervisor_parser = PydanticOutputParser(pydantic_object=SupervisorResponse)
@@ -50,7 +50,7 @@ supervisor_chain = supervisor_prompt | supervisor_llm | supervisor_parser
 if __name__ == '__main__':
     set_env()
     result = supervisor_chain.invoke(
-        {'messages_as_string': ['whats my name'],
+        {'messages_as_string': ['what are you powered by'],
          'name': 'ABC',
          'email': 'test@mail',
          'display_messages': [''''''],
