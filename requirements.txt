@@ -1,1 +1,4 @@
-django
+streamlit
+langchain
+langgraph
+langchain_openai
