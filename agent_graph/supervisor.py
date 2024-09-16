@@ -50,7 +50,7 @@ supervisor_chain = supervisor_prompt | supervisor_llm | supervisor_parser
 if __name__ == '__main__':
     set_env()
     result = supervisor_chain.invoke(
-        {'messages_as_string': ['what are you powered by'],
+        {'messages_as_string': ['is sarthak good at python'],
          'name': 'ABC',
          'email': 'test@mail',
          'display_messages': [''''''],
