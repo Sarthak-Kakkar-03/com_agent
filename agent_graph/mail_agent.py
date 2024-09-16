@@ -73,4 +73,14 @@ mail_prompt = PromptTemplate(
 
 mail_chain = mail_prompt | mail_llm
 
+if __name__ == '__main__':
+    result = mail_prompt.invoke({
+        'visible_messages': 'tell sarthak to reach out to me',
+        'employer_name': 'Holdman',
+        'employer_email': 'holdman@gmail.com',
+        'supervisor_instruction': '''
+        Prepare an email to Sarthak Kakkar with the employer's request for him to reach out, and include a summary of the conversation so far.'''
+    })
+    print(result)
+
 

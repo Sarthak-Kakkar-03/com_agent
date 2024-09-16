@@ -2,7 +2,7 @@ from typing import Literal
 
 from info_agent import info_chain
 from supervisor import supervisor_chain
-from mail_agent import mail_chain, send_mail
+from mail_agent import send_mail, mail_prompt, mail_llm
 from message import message_chain
 from langchain_core.messages import HumanMessage, ToolMessage
 from state import OverallState
@@ -67,12 +67,13 @@ def mail_node(state: OverallState) -> OverallState:
     :return:
     '''
     supervisor_instruction = state['messages'][-1].content
-    response = mail_chain.invoke({
+    prompt = mail_prompt.invoke({
         'visible_messages': state['visible_messages'],
         'employer_name': state['name'],
         'employer_email': state['email'],
         'supervisor_instruction': supervisor_instruction
     })
+    response = mail_llm.invoke(prompt)
     state['messages'].append(response)
     return state
 
