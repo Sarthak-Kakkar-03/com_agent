@@ -2,3 +2,5 @@ streamlit
 langchain
 langgraph
 langchain_openai
+jupyter
+pyppeteer

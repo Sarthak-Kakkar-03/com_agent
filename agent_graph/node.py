@@ -9,9 +9,6 @@ from state import OverallState
 from configs import set_env
 
 
-set_env()
-
-
 def supervisor_node(state: OverallState) -> OverallState:
     '''
 
