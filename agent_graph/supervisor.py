@@ -30,7 +30,8 @@ supervisor_prompt = PromptTemplate(
     template=(
         "You are an AI-powered conversation manager tasked with making decisions to support Sarthak Kakkar's representation to potential employers. You are speaking to the employer themselves."
         "Your goal is to choose the best next step based on the conversation state. You have three options:\n"
-        "1. Select 'MAIL' only if the employer explicitly says they want to reach out to Sarthak.\n"
+        "1. Select 'MAIL' only if the employer explicitly says they want to reach out to Sarthak, ensure to always "
+        "attach a summary of the conversation till now too.\n"
         "2. Select 'INFO' if any information is requested.\n"
         "3. Select 'MESSAGE' if neither a mail to or new information about Sarthak is required, so a message has to be sent back to the employer\n\n"
         "Based on the following conversation context, select the most appropriate action:\n\n"

@@ -24,6 +24,7 @@ def supervisor_node(state: OverallState) -> OverallState:
     supervisor_instruction = HumanMessage(content=response.supervisor_message)
     state['messages'].append(supervisor_instruction)
     state['next'] = response.next
+    state['latest_info'] = 'No info collected'
     return state
 
 
@@ -35,7 +36,7 @@ def supervisor_choice(state: OverallState) -> Literal['mail', 'message', 'info']
     '''
     if state['next'] == 'MAIL':
         return 'mail'
-    elif state['next'] == 'info':
+    elif state['next'] == 'INFO':
         return 'info'
     else:
         return 'message'
@@ -53,8 +54,9 @@ def info_node(state: OverallState) -> OverallState:
         'query': query,
         'employer_name': employer_name
     })
-    query_response = HumanMessage(content= response.info_message)
-    state['messages'].append(query_response)
+    communication_message = HumanMessage(content=response.message)
+    state['messages'].append(communication_message)
+    state['latest_info'] = response.info_message
     return state
 
 
@@ -115,7 +117,9 @@ def message_node(state: OverallState) -> OverallState:
     visible_conversation = state['visible_messages']
     response = message_chain.invoke({
         'visible_conversation': visible_conversation,
-        'invisible_conversation': invisible_conversation
+        'invisible_conversation': invisible_conversation,
+        'info': state['latest_info'],
+        'employer_name': state['name']
 
     })
     state['visible_messages'].append(response.chat_response)

@@ -36,11 +36,14 @@ message_prompt = PromptTemplate(
         and any relevant updates from the internal agents.\n
         These are the latest messages in the conversation with the employer:\n {visible_conversation}\n\n
         Internal conversation not visible to employer:\n {invisible_conversation}\n\n
+        This is the latest received information from information retriever agent: {info}\n
+        Following is the name of the person/employer you are conversing with: {employer_name}
         Follow the formatting instructions:\n {format_instructions}\n
+        
         '''
     ),
 
-    input_variables=['visible_conversation', 'invisible_conversation'],
+    input_variables=['visible_conversation', 'invisible_conversation', 'info', 'employer_name'],
     partial_variables={"format_instructions": message_parser.get_format_instructions()}
 
 )

@@ -21,6 +21,8 @@ info_llm = ChatOpenAI(
 
 class InfoResponse(BaseModel):
     info_message: str = Field(description="A concise message, giving the information requested")
+    message: str = Field('Message to the agent which is going to frame a response for the employer, using the '
+                         'information you provided')
 
 
 info_parser = PydanticOutputParser(pydantic_object=InfoResponse)
