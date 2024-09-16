@@ -35,12 +35,12 @@ supervisor_prompt = PromptTemplate(
         "3. Select 'MESSAGE' if neither a mail to or new information about Sarthak is required, so a message has to be sent back to the employer\n\n"
         "Based on the following conversation context, select the most appropriate action:\n\n"
         "Messages: {messages_as_string}\n"
-        "Latest Messages Shown to Employer: {display_messages}\n\n"
+        "Latest Messages Shown to Employer: {visible_messages}\n\n"
         "Please provide the next task and specify the appropriate agent.\n"
         "These are the format instructions:\n"
         "{format_instructions}"
     ),
-    input_variables=['messages_as_string', 'display_messages'],
+    input_variables=['messages_as_string', 'visible_messages'],
     partial_variables={"format_instructions": supervisor_parser.get_format_instructions()}
 )
 
@@ -53,7 +53,7 @@ if __name__ == '__main__':
         {'messages_as_string': ['is sarthak good at python'],
          'name': 'ABC',
          'email': 'test@mail',
-         'display_messages': [''''''],
+         'visible_messages': [''''''],
          'latest_info': 'sarthak knows python'}
     )
     print(result.next)

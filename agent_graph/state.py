@@ -9,6 +9,6 @@ class OverallState(TypedDict):
     messages: List[BaseMessage]
     name: str
     email: str
-    display_messages: List[str]
-    counter: int
+    visible_messages: List[str]
     latest_info: str
+    next: str

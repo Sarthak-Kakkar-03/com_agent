@@ -45,4 +45,4 @@ message_prompt = PromptTemplate(
 
 )
 
-message_chain = message_prompt | message_llm | message_prompt
+message_chain = message_prompt | message_llm | message_parser

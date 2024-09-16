@@ -19,14 +19,19 @@ def send_mail(content: str, receiver_id: str):
     Sends an email containing the content to the provided receiver id
     :param content: the content to send within the mail
     :param receiver_id: the id of the receiver
-    :return:
+    :return: Returns True if mail sent successfully, otherwise False
     '''
-    s = smtplib.SMTP('smtp.gmail.com', 587)
-    s.starttls()
-    s.login(bot_mail_id, bot_mail_password)
-    message = content
-    s.sendmail(bot_mail_id, receiver_id, message)
-    s.quit()
+    try:
+        s = smtplib.SMTP('smtp.gmail.com', 587)
+        s.starttls()
+        s.login(bot_mail_id, bot_mail_password)
+        message = content
+        s.sendmail(bot_mail_id, receiver_id, message)
+        s.quit()
+        return "Email sent"
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+        return "Failed to send email"
 
 
 tools = [send_mail]
@@ -45,7 +50,7 @@ mail_llm = ChatOpenAI(
 
 
 class MailResponse(BaseModel):
-    content_summary: str = Field(description="A message summarizing the content sent in the mail")
+    content_summary: str = Field(description="Summary of the mail you sent and its content")
 
 
 mail_parser = PydanticOutputParser(pydantic_object=MailResponse)
@@ -53,18 +58,18 @@ mail_parser = PydanticOutputParser(pydantic_object=MailResponse)
 mail_prompt = PromptTemplate(
     template=(
         "You are an AI system assisting Sarthak Kakkar in professional communication with a potential employer. "
-        "Your task is to generate a polished summary of the following conversation for an email. "
+        "Your task is to draft a polished email based on the following instruction:\n {supervisor_instruction}\n\n "
         "Please adhere strictly to the provided formatting guidelines and address the summary to "
         "sarthakkakkar2021@gmail.com.\n\n"
         "Make sure to add Employer Name: {employer_name} and Employer Email: {employer_email} in the mail.\n"
-        "Conversation Details:\n{messages_as_strings}\n\n"
+        "Conversation Log until now:\n{visible_messages}\n\n"
         "Formatting Instructions:\n{format_instructions}\n"
     ),
-    input_variables=['messages_as_strings', 'employer_name', 'employer_email'],
+    input_variables=['visible_messages', 'employer_name', 'employer_email', 'supervisor_instruction'],
     partial_variables={"format_instructions": mail_parser.get_format_instructions()}
 )
 
 
-mail_chain = mail_prompt | mail_llm | mail_parser
+mail_chain = mail_prompt | mail_llm
 
 
