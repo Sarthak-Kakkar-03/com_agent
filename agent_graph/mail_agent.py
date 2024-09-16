@@ -40,13 +40,13 @@ tool_node = ToolNode(tools)
 mail_llm = ChatOpenAI(
     model='deepseek-chat',
     openai_api_key=deepseek_api_key,
-    openai_api_base='https://api.deepseek.com/beta',
+    openai_api_base='https://api.deepseek.com',
     temperature=1.0,
     # max_tokens=8192,
     timeout=None,
     max_retries=2,
     api_key=deepseek_api_key
-).bind_tools(tools)
+).bind_tools(tools, tool_choice='send_mail')
 
 
 class MailResponse(BaseModel):
@@ -74,7 +74,7 @@ mail_prompt = PromptTemplate(
 mail_chain = mail_prompt | mail_llm
 
 if __name__ == '__main__':
-    result = mail_prompt.invoke({
+    result = mail_chain.invoke({
         'visible_messages': 'tell sarthak to reach out to me',
         'employer_name': 'Holdman',
         'employer_email': 'holdman@gmail.com',

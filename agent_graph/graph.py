@@ -22,10 +22,10 @@ workflow.add_edge("message", "__end__")
 if __name__ == '__main__':
     com_agent = workflow.compile()
     result = com_agent.invoke({
-        'messages': [HumanMessage('tell sarthak to reach out to me')],
+        'messages': [HumanMessage('tell sarthak to contact me')],
         'name': 'Goldman Employer',
         'email': 'sarthak87270@gmail.com',
-        'visible_messages': ['tell sarthak to reach out to me'],
+        'visible_messages': ['tell sarthak to contact me'],
         'latest_info': '',
         'next': 'supervisor'
     })
