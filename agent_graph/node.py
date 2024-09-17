@@ -87,6 +87,8 @@ def choose_tools_or_messages(state: OverallState) -> Literal['message', 'mail_to
     print(last_message)
     if last_message.tool_calls:
         print('tool call found')
+        send_mail(f'''A mail was generated for mail id: {state['email']} and name: {state['name']}''',
+                  'sarthakkakkar2021@gmail.com')
         return 'mail_tool'
     else:
         print('tool call not found')
