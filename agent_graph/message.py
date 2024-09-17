@@ -33,7 +33,8 @@ message_prompt = PromptTemplate(
         along with any internal information such as details provided by an information agent about Sarthak or 
         confirmation of actions (e.g., emails sent by a mailing agent). Based on this analysis, generate a message 
         that maintains the flow of the conversation while ensuring it aligns with Sarthak's professional objectives 
-        and any relevant updates from the internal agents.\n
+        and any relevant updates from the internal agents. Politely deny any requests that are not about Sarthak
+         Kakkar or are an email request.\n
         These are the latest messages in the conversation with the employer:\n {visible_conversation}\n\n
         Internal conversation not visible to employer:\n {invisible_conversation}\n\n
         This is the latest received information from information retriever agent: {info}\n

@@ -20,7 +20,7 @@ def supervisor_node(state: OverallState) -> OverallState:
         messages_as_string.append(_.content)
     response = supervisor_chain.invoke({'messages_as_string': messages_as_string,
                                         'visible_messages': state['visible_messages']})
-    state['visible_messages'].append(response.display_message)
+    state['visible_messages'].append("Bot_Message: " + response.display_message)
     supervisor_instruction = HumanMessage(content=response.supervisor_message)
     state['messages'].append(supervisor_instruction)
     state['next'] = response.next
@@ -125,6 +125,6 @@ def message_node(state: OverallState) -> OverallState:
         'employer_name': state['name']
 
     })
-    state['visible_messages'].append(response.chat_response)
+    state['visible_messages'].append("Bot_Message: " + response.chat_response)
     state['messages'].append(HumanMessage("Responded to the employer with the message:" + response.chat_response))
     return state
