@@ -1,4 +1,6 @@
 import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from langchain_core.messages import AIMessage
 from langchain_core.output_parsers import PydanticOutputParser
@@ -28,6 +30,45 @@ def send_mail(content: str, receiver_id: str):
         message = content
         s.sendmail(bot_mail_id, receiver_id, message)
         s.quit()
+        return "Email sent"
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+        return "Failed to send email"
+
+
+
+def send_direct_mail(content: str, receiver_id: str):
+    '''
+    Sends an email containing the content to the provided receiver id
+    :param content: the content to send within the mail
+    :param receiver_id: the id of the receiver
+    :return: Returns True if mail sent successfully, otherwise False
+    '''
+    try:
+        # Define email sender and receiver
+        sender_email = bot_mail_id
+        receiver_email = receiver_id
+
+        # Create a multipart message and set headers
+        message = MIMEMultipart()
+        message['From'] = sender_email
+        message['To'] = receiver_email
+        message['Subject'] = 'Mail generated notification'
+
+        # Attach the email body (content) to the message
+        message.attach(MIMEText(content, 'plain'))
+
+        # Connect to the Gmail SMTP server
+        s = smtplib.SMTP('smtp.gmail.com', 587)
+        s.starttls()
+
+        # Log in to your Gmail account
+        s.login(sender_email, bot_mail_password)
+
+        # Send the email
+        s.sendmail(sender_email, receiver_email, message.as_string())
+        s.quit()
+
         return "Email sent"
     except Exception as e:
         print(f"Failed to send email: {e}")
