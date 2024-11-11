@@ -5,6 +5,8 @@ from configs import set_env
 
 set_env()
 
+# Script to generate the workflow initializing the agent graph
+
 workflow = StateGraph(OverallState)
 workflow.add_node("mail", mail_node)
 workflow.add_node("supervisor", supervisor_node)
@@ -20,12 +22,13 @@ workflow.add_edge("message", "__end__")
 
 
 if __name__ == '__main__':
+    # Test setup to manually run the graph and confirm usage
     com_agent = workflow.compile()
     result = com_agent.invoke({
-        'messages': [HumanMessage('''tell me about sarthak's proficiency in python''')],
+        'messages': [HumanMessage('''tell sarthak to reach out to me''')],
         'name': 'TEST_EMPLOYER1',
         'email': 'blahblah@gmail.com',
-        'visible_messages': ['''tell me about sarthak's proficiency in python'''],
+        'visible_messages': ['''tell sarthak to reach out to me'''],
         'latest_info': '',
         'next': 'supervisor'
     })

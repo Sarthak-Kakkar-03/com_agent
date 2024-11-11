@@ -17,12 +17,12 @@ set_env()
 
 @tool
 def send_mail(content: str, receiver_id: str):
-    '''
+    """
     Sends an email containing the content to the provided receiver id
     :param content: the content to send within the mail
     :param receiver_id: the id of the receiver
     :return: Returns True if mail sent successfully, otherwise False
-    '''
+    """
     try:
         s = smtplib.SMTP('smtp.gmail.com', 587)
         s.starttls()
@@ -36,14 +36,13 @@ def send_mail(content: str, receiver_id: str):
         return "Failed to send email"
 
 
-
 def send_direct_mail(content: str, receiver_id: str):
-    '''
+    """
     Sends an email containing the content to the provided receiver id
     :param content: the content to send within the mail
     :param receiver_id: the id of the receiver
     :return: Returns True if mail sent successfully, otherwise False
-    '''
+    """
     try:
         # Define email sender and receiver
         sender_email = bot_mail_id
@@ -111,7 +110,6 @@ mail_prompt = PromptTemplate(
     partial_variables={"format_instructions": mail_parser.get_format_instructions()}
 )
 
-
 mail_chain = mail_prompt | mail_llm
 
 if __name__ == '__main__':
@@ -123,5 +121,3 @@ if __name__ == '__main__':
         Prepare an email to Sarthak Kakkar with the employer's request for him to reach out, and include a summary of the conversation so far.'''
     })
     print(result)
-
-

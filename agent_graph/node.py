@@ -10,11 +10,11 @@ from configs import set_env
 
 
 def supervisor_node(state: OverallState) -> OverallState:
-    '''
-
-    :param state:
-    :return:
-    '''
+    """
+    The node function for the supervisor agent
+    :param state: communication state object of the graph
+    :return: updated state object
+    """
     messages_as_string = []
     for _ in state['messages']:
         messages_as_string.append(_.content)
@@ -29,11 +29,11 @@ def supervisor_node(state: OverallState) -> OverallState:
 
 
 def supervisor_choice(state: OverallState) -> Literal['mail', 'message', 'info']:
-    '''
-
-    :param state:
-    :return:
-    '''
+    """
+    Decider function for the next node to move to
+    :param state: communication state object of the graph
+    :return: Decides choice between 'mail', 'message', 'info'
+    """
     if state['next'] == 'MAIL':
         return 'mail'
     elif state['next'] == 'INFO':
@@ -43,11 +43,11 @@ def supervisor_choice(state: OverallState) -> Literal['mail', 'message', 'info']
 
 
 def info_node(state: OverallState) -> OverallState:
-    '''
-
-    :param state:
-    :return:
-    '''
+    """
+    The node holding information about me to inform the agent
+    :param state: communication state object of the graph
+    :return: updated state object
+    """
     query = state['messages'][-1].content
     employer_name = state['name']
     response = info_chain.invoke({
@@ -61,11 +61,11 @@ def info_node(state: OverallState) -> OverallState:
 
 
 def mail_node(state: OverallState) -> OverallState:
-    '''
-
-    :param state:
-    :return:
-    '''
+    """
+    The function node to generate the mail content to be sent
+    :param state: communication state object of the graph
+    :return: updated state object
+    """
     supervisor_instruction = state['messages'][-1].content
     response = mail_chain.invoke({
         'visible_messages': state['visible_messages'],
@@ -78,11 +78,11 @@ def mail_node(state: OverallState) -> OverallState:
 
 
 def choose_tools_or_messages(state: OverallState) -> Literal['message', 'mail_tool']:
-    '''
-
-    :param state:
-    :return:
-    '''
+    """
+    Choose wheter a tool should be called or move to next message node
+    :param state: communication state object of the graph
+    :return: Decided choice between 'message', 'mail_tool'
+    """
     last_message = state['messages'][-1]
     print(last_message)
     if last_message.tool_calls:
@@ -100,11 +100,11 @@ def choose_tools_or_messages(state: OverallState) -> Literal['message', 'mail_to
 
 
 def mail_tool_node(state: OverallState) -> OverallState:
-    '''
-
-    :param state:
-    :return:
-    '''
+    """
+    Tool node for the mail function, initiates an email if required
+    :param state: communication state object of the graph
+    :return: updated state object
+    """
     for tool_call in state["messages"][-1].tool_calls:
         tool = send_mail
         observation = tool.invoke(tool_call["args"])
@@ -114,11 +114,11 @@ def mail_tool_node(state: OverallState) -> OverallState:
 
 
 def message_node(state: OverallState) -> OverallState:
-    '''
-
-    :param state:
-    :return:
-    '''
+    """
+    Format and generates the final message to the employer, function node for that
+    :param state: communication state object of the graph
+    :return: updated state object
+    """
     invisible_conversation = []
     for _ in state['messages']:
         invisible_conversation.append(_.content)

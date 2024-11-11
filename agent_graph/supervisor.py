@@ -6,6 +6,8 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 
 set_env()
 
+# LLM initialization for the supervisor
+
 supervisor_llm = ChatOpenAI(
     model='deepseek-chat',
     openai_api_key=deepseek_api_key,
@@ -19,6 +21,7 @@ supervisor_llm = ChatOpenAI(
 
 
 class SupervisorResponse(BaseModel):
+    # Class to hold supervisor response
     supervisor_message: str = Field(description="Detailed instruction about the message/task to send to the next agent")
     next: str = Field(description="enum: MAIL, INFO, or MESSAGE")
     display_message: str = Field(description="Short/Concise message to display the employer in the conversation, detailing which agent you delegated the action to and why")
