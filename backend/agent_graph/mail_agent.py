@@ -1,123 +1,135 @@
+# mail_agent.py
+import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import Optional
 
-from langchain_core.messages import AIMessage
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import ToolNode
 from pydantic.v1 import BaseModel, Field
-
-from configs import set_env, deepseek_api_key, bot_mail_id, bot_mail_password
 from langchain_core.tools import tool
 
+from configs import set_env, deepseek_api_key, bot_mail_id, bot_mail_password
+
 set_env()
+logger = logging.getLogger(__name__)
+
+
+def _smtp_send_plaintext(
+    content: str,
+    receiver_email: str,
+    subject: Optional[str] = None,
+    sender_email: Optional[str] = None,
+) -> str:
+    """
+    Internal helper to send a plaintext email via Gmail SMTP with TLS.
+    Returns a short status string.
+    """
+    sender = sender_email or bot_mail_id
+    try:
+        # Create message
+        msg = MIMEMultipart()
+        msg["From"] = sender
+        msg["To"] = receiver_email
+        msg["Subject"] = subject or "Notification"
+
+        msg.attach(MIMEText(content, "plain"))
+
+        # Send via Gmail SMTP
+        s = smtplib.SMTP("smtp.gmail.com", 587)
+        s.starttls()
+        s.login(sender, bot_mail_password)
+        s.sendmail(sender, receiver_email, msg.as_string())
+        s.quit()
+        return "Email sent"
+    except Exception as e:
+        logger.exception("Failed to send email")
+        return f"Failed to send email: {e}"
 
 
 @tool
-def send_mail(content: str, receiver_id: str):
+def send_mail(content: str, receiver_id: str) -> str:
     """
-    Sends an email containing the content to the provided receiver id
-    :param content: the content to send within the mail
-    :param receiver_id: the id of the receiver
-    :return: Returns True if mail sent successfully, otherwise False
+    Tool: Send an email with the given content to receiver_id.
+    Returns a short status string.
     """
-    try:
-        s = smtplib.SMTP('smtp.gmail.com', 587)
-        s.starttls()
-        s.login(bot_mail_id, bot_mail_password)
-        message = content
-        s.sendmail(bot_mail_id, receiver_id, message)
-        s.quit()
-        return "Email sent"
-    except Exception as e:
-        print(f"Failed to send email: {e}")
-        return "Failed to send email"
+    return _smtp_send_plaintext(content=content, receiver_email=receiver_id, subject="Requested Email")
 
 
-def send_direct_mail(content: str, receiver_id: str):
+def send_direct_mail(content: str, receiver_id: str) -> str:
     """
-    Sends an email containing the content to the provided receiver id
-    :param content: the content to send within the mail
-    :param receiver_id: the id of the receiver
-    :return: Returns True if mail sent successfully, otherwise False
+    Direct helper (non-tool) to send a structured 'Mail generated' notification.
+    Returns a short status string.
     """
-    try:
-        # Define email sender and receiver
-        sender_email = bot_mail_id
-        receiver_email = receiver_id
-
-        # Create a multipart message and set headers
-        message = MIMEMultipart()
-        message['From'] = sender_email
-        message['To'] = receiver_email
-        message['Subject'] = 'Mail generated notification'
-
-        # Attach the email body (content) to the message
-        message.attach(MIMEText(content, 'plain'))
-
-        # Connect to the Gmail SMTP server
-        s = smtplib.SMTP('smtp.gmail.com', 587)
-        s.starttls()
-
-        # Log in to your Gmail account
-        s.login(sender_email, bot_mail_password)
-
-        # Send the email
-        s.sendmail(sender_email, receiver_email, message.as_string())
-        s.quit()
-
-        return "Email sent"
-    except Exception as e:
-        print(f"Failed to send email: {e}")
-        return "Failed to send email"
+    return _smtp_send_plaintext(
+        content=content,
+        receiver_email=receiver_id,
+        subject="Mail generated notification",
+    )
 
 
+# Expose a ToolNode for LangGraph tool execution (if you want to wire it directly)
 tools = [send_mail]
 tool_node = ToolNode(tools)
 
-mail_llm = ChatOpenAI(
-    model='deepseek-chat',
-    openai_api_key=deepseek_api_key,
-    openai_api_base='https://api.deepseek.com',
-    temperature=1.0,
-    # max_tokens=8192,
-    timeout=None,
-    max_retries=2,
-    api_key=deepseek_api_key
-).bind_tools(tools, tool_choice='send_mail')
-
 
 class MailResponse(BaseModel):
-    content_summary: str = Field(description="Summary of the mail you sent and its content")
+    content_summary: str = Field(
+        description="Summary of the mail you sent and its content"
+    )
 
 
 mail_parser = PydanticOutputParser(pydantic_object=MailResponse)
 
 mail_prompt = PromptTemplate(
     template=(
-        "You are an AI system assisting Sarthak Kakkar in professional communication with a potential employer. "
-        "Your task is to draft a polished email based on the following instruction:\n {supervisor_instruction}\n\n "
-        "Compose the email as an AI entity, assuming it was the employers request to you."
-        "Please adhere strictly to the provided formatting guidelines and address the summary to "
-        "sarthakkakkar2021@gmail.com.\n\n"
-        "Make sure to add Employer Name: {employer_name} and Employer Email: {employer_email} in the mail.\n"
-        "Conversation Log until now:\n{visible_messages}\n\n"
-        # "Formatting Instructions:\n{format_instructions}\n"
+        "You are an AI system assisting Sarthak Kakkar in professional communication with a potential employer.\n"
+        "Your task is to draft a clear, professional email based on the following instruction:\n"
+        "{supervisor_instruction}\n\n"
+        "Compose the email as an AI entity acting on the employer's request to you.\n"
+        "Address the summary to sarthakkakkar2021@gmail.com.\n\n"
+        "Include:\n"
+        "- Employer Name: {employer_name}\n"
+        "- Employer Email: {employer_email}\n\n"
+        "Conversation log so far:\n{visible_messages}\n"
     ),
-    input_variables=['visible_messages', 'employer_name', 'employer_email', 'supervisor_instruction'],
-    partial_variables={"format_instructions": mail_parser.get_format_instructions()}
+    input_variables=[
+        "visible_messages",
+        "employer_name",
+        "employer_email",
+        "supervisor_instruction",
+    ],
+    # Keeping parser handy if you later choose to parse; for now chain returns text
+    partial_variables={"format_instructions": mail_parser.get_format_instructions()},
 )
 
+mail_llm = ChatOpenAI(
+    model="deepseek-chat",
+    openai_api_key=deepseek_api_key,
+    openai_api_base="https://api.deepseek.com",
+    temperature=1.0,
+    timeout=None,
+    max_retries=2,
+    api_key=deepseek_api_key,
+).bind_tools(tools, tool_choice="send_mail")
+
+# The LLM will emit a tool call (send_mail) when appropriate.
 mail_chain = mail_prompt | mail_llm
 
-if __name__ == '__main__':
-    result = mail_chain.invoke({
-        'visible_messages': 'tell sarthak to reach out to me',
-        'employer_name': 'Holdman',
-        'employer_email': 'holdman@gmail.com',
-        'supervisor_instruction': '''
-        Prepare an email to Sarthak Kakkar with the employer's request for him to reach out, and include a summary of the conversation so far.'''
-    })
-    print(result)
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    demo = mail_chain.invoke(
+        {
+            "visible_messages": "tell sarthak to reach out to me",
+            "employer_name": "Holdman",
+            "employer_email": "holdman@gmail.com",
+            "supervisor_instruction": (
+                "Prepare an email to Sarthak with the employer's request to connect; "
+                "include a brief summary of the conversation so far."
+            ),
+        }
+    )
+    print(demo)
