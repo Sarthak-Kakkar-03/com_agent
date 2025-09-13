@@ -25,10 +25,10 @@ if __name__ == '__main__':
     # Test setup to manually run the graph and confirm usage
     com_agent = workflow.compile()
     result = com_agent.invoke({
-        'messages': [HumanMessage('''tell sarthak to reach out to me''')],
-        'name': 'TEST_EMPLOYER1',
-        'email': 'blahblah@gmail.com',
-        'visible_messages': ['''tell sarthak to reach out to me'''],
+        'messages': [HumanMessage('''tell sarthak to contact me''')],
+        'name': 'Ayan',
+        'email': 'ayanimran@gmail.com',
+        'visible_messages': ['''tell sarthak to contact me'''],
         'latest_info': '',
         'next': 'supervisor'
     })
