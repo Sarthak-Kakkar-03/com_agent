@@ -25,7 +25,7 @@ if __name__ == '__main__':
     # Test setup to manually run the graph and confirm usage
     com_agent = workflow.compile()
     result = com_agent.invoke({
-        'messages': [HumanMessage('''tell sarthak to contact me''')],
+        'messages': [HumanMessage('''tell me about sarthak''')],
         'name': 'Ayan',
         'email': 'ayanimran@gmail.com',
         'visible_messages': ['''tell sarthak to contact me'''],
