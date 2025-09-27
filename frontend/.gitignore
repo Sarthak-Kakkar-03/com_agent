@@ -1,8 +1,0 @@
-node_modules
-package-lock.json
-dist
-
-logs
-*.log
-dist-ssr
-*.local
