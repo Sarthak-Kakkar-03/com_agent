@@ -3,17 +3,14 @@ import logging
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
+from .information import PROFILE_TEXT
 
-from configs import deepseek_api_key, set_env
+from .configs import deepseek_api_key, set_env
 from langchain_core.pydantic_v1 import BaseModel, Field
 
 set_env()
 logger = logging.getLogger(__name__)
 
-SARTHAK_PROFILE_PATH = "information.txt"
-with open(SARTHAK_PROFILE_PATH, 'r') as file:
-    file_content = file.read()
-_SARTHAK_PROFILE = file_content
 
 info_llm = ChatOpenAI(
     model="deepseek-chat",
@@ -46,12 +43,9 @@ info_prompt = PromptTemplate(
     input_variables=["query"],
     partial_variables={
         "format_instructions": info_parser.get_format_instructions(),
-        "profile": _SARTHAK_PROFILE,
+        "profile": PROFILE_TEXT,
     },
 )
 
 info_chain = info_prompt | info_llm | info_parser
 
-if __name__ == "__main__":
-    demo = info_chain.invoke({"query": "Provide information about Sarthak Kakkar."})
-    print(demo.info_message)
