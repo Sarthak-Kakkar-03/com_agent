@@ -1,22 +1,29 @@
+
 # state.py
-from typing import TypedDict, List, Literal
-from langchain_core.messages import BaseMessage
+from typing import TypedDict, Literal, List, Dict, Any
 
+NextStep = Literal["MAIL", "INFO", "MESSAGE", "supervisor"]
 
-class OverallState(TypedDict):
-    """
-    Overall state object of the communication agent.
-    Keys are mutated by graph nodes, so we keep a TypedDict
-    (LangGraph plays nicer with dict-like state than with pydantic models).
-    """
-    messages: List[BaseMessage]            # Conversation memory (internal + tool messages)
-    name: str                              # Employer/person name
-    email: str                             # Employer/person email
-    visible_messages: List[str]            # Messages shown to the employer
-    latest_info: str                       # Info fetched by info agent
-    next: Literal["MAIL", "INFO", "MESSAGE", "supervisor"]  # Next agent decision
-
+class OverallState(TypedDict, total=False):
+    # UI-facing transcript (bounded by pruning)
+    visible_messages: List[str]
+    # short rolling summary of the conversation
+    summary: str # Deprecated, too much overhead
+    # routing / info
+    latest_info: str
+    next: NextStep
+    # actor metadata
+    name: str
+    email: str
+    # side-effect/audit log (bounded)
+    events: List[Dict[str, Any]]
+    # mail tool execution (compact; no LC objects)
+    pending_tools: List[Dict[str, Any]]
+    last_mail_ai_text: str
+    # optional scratch space
+    supervisor_instruction: str
+    intermediate_note: str
 
 def get_visible_transcript(visible_messages: List[str]) -> str:
-    """Utility: Join visible messages into a single transcript block."""
+    """Join the visible transcript block."""
     return "\n".join(visible_messages or [])

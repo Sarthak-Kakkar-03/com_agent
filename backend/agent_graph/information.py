@@ -1,3 +1,8 @@
+PROFILE_OWNER_NAME = "Sarthak Kakkar"
+
+PROFILE_OWNER_EMAIL = "sarthakkakkar2021@gmail.com"
+
+PROFILE_TEXT = '''
 Sarthak Kakkar
 +1 (857) 313 2670 | kakkar.sar@gmail.com | linkedin.com/in/sarthakkakkar03 | https://skakkar.netlify.app/
 
@@ -53,3 +58,5 @@ Software Development: Agile, API Development, Async Programming, CI/CD, OOD, Uni
 Embedded Systems: Arduino, Event-Driven Architectures, BLE, Raspberry Pi, USB HID, Wireless & IoT
 Frontend & Web: HTML5, Next.js, React, React Router DOM, REST APIs, State Management, Tailwind CSS
 Backend: AuthN/Z, DB Integration, Express.js, Flask, RESTful API Design, Server-Side Development
+
+'''

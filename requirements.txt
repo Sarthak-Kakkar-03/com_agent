@@ -4,3 +4,7 @@ langgraph
 langchain_openai
 jupyter
 pyppeteer
+fastapi
+uvicorn
+pydantic
+pydantic[email]

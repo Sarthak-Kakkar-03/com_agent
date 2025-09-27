@@ -1,13 +1,13 @@
 # message.py
 import logging
-from typing import Optional
 
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.pydantic_v1 import BaseModel, Field
+from .information import PROFILE_OWNER_NAME
 
-from configs import set_env, deepseek_api_key
+from .configs import set_env, deepseek_api_key
 
 set_env()
 logger = logging.getLogger(__name__)
@@ -34,11 +34,11 @@ message_llm = ChatOpenAI(
 message_prompt = PromptTemplate(
     template=(
         "You are an AI-powered message generation agent interacting with a potential employer on behalf of "
-        "Sarthak Kakkar. Use the visible conversation, any internal summaries, and the latest info retrieved by "
-        "the information agent. Maintain professional tone, keep replies concise, and only discuss Sarthak.\n\n"
-        "Politely refuse requests that are not about Sarthak Kakkar or that are email-sending requests.\n\n"
+        f"{PROFILE_OWNER_NAME} Use the visible conversation (available to the employer), any internal summaries, "
+        "and the latest info retrieved by"
+        f"the information agent. Maintain professional tone, keep replies concise, and only discuss {PROFILE_OWNER_NAME}.\n\n"
+        f"Politely refuse requests that are not about {PROFILE_OWNER_NAME}.\n\n"
         "Visible conversation (latest messages first or in order given):\n{visible_conversation}\n\n"
-        "Internal conversation (not visible to employer):\n{invisible_conversation}\n\n"
         "Latest info from info agent: {info}\n"
         "Employer name: {employer_name}\n\n"
         "{format_instructions}"

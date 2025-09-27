@@ -1,50 +1,63 @@
+
 # node.py
 import logging
-from typing import Literal, List
+from typing import Literal, List, Dict, Any
 
-from info_agent import info_chain
-from supervisor import supervisor_chain
-from mail_agent import mail_chain, send_direct_mail, send_mail
-from message import message_chain
-from langchain_core.messages import HumanMessage, ToolMessage, BaseMessage
-from state import OverallState, get_visible_transcript
+from .info_agent import info_chain
+from .supervisor import supervisor_chain
+from .mail_agent import mail_chain, send_direct_mail, send_mail
+from .message import message_chain
+from .state import OverallState, get_visible_transcript
+from .information import PROFILE_OWNER_EMAIL
+
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 logger = logging.getLogger(__name__)
 
+def _append_ai(state: OverallState, text: str) -> None:
+    state.setdefault("visible_messages", []).append("Bot_Message: " + text)
 
-def _contents(messages: List[BaseMessage]) -> List[str]:
-    """Extract .content strings from messages, skipping items without content."""
-    out: List[str] = []
-    for m in messages:
-        try:
-            out.append(getattr(m, "content", ""))
-        except Exception:
-            out.append("")
-    return out
+def _last_user_visible(state: OverallState) -> str:
+    for msg in reversed(state.get("visible_messages", [])):
+        if not msg.startswith("Bot_Message:"):
+            return msg
+    return ""
+
+def _build_lc_messages(visible_messages: List[str], k: int = 6):
+    msgs = []
+    for t in visible_messages[-k:]:
+        if t.startswith("Bot_Message:"):
+            msgs.append(AIMessage(content=t[len("Bot_Message:"):].strip()))
+        else:
+            msgs.append(HumanMessage(content=t))
+    return msgs
+
+def _prune_state(state: OverallState, keep_visible: int = 12, keep_events: int = 50) -> None:
+    vm = state.get("visible_messages", [])
+    if len(vm) > keep_visible:
+        state["visible_messages"] = vm[-keep_visible:]
+    ev = state.get("events", [])
+    if len(ev) > keep_events:
+        state["events"] = ev[-keep_events:]
+    # drop bulky intermediates
+    for key in ("pending_tools", "last_mail_ai_text", "supervisor_instruction", "intermediate_note"):
+        # keep pending_tools only until executed
+        if key != "pending_tools":
+            state.pop(key, None)
 
 
 def supervisor_node(state: OverallState) -> OverallState:
-    """
-    The node function for the supervisor agent.
-    """
-    messages_as_string = _contents(state["messages"])
-    response = supervisor_chain.invoke(
-        {"messages_as_string": messages_as_string, "visible_messages": state["visible_messages"]}
-    )
-    # Show a concise display message to employer
-    state["visible_messages"].append("Bot_Message: " + response.display_message)
-    # Add internal instruction for next agent
-    supervisor_instruction = HumanMessage(content=response.supervisor_message)
-    state["messages"].append(supervisor_instruction)
+    """The node function for the supervisor agent."""
+    response = supervisor_chain.invoke({"visible_messages": state.get("visible_messages", [])})
+    # visible route explanation
+    state.setdefault("visible_messages", []).append("Bot_Message: " + response.display_message)
+    # store plain instruction (no LC objects)
+    state["supervisor_instruction"] = response.supervisor_message
     state["next"] = response.next
     state["latest_info"] = state.get("latest_info") or "No info collected"
     return state
 
-
 def supervisor_choice(state: OverallState) -> Literal["mail", "message", "info"]:
-    """
-    Decider function for the next node.
-    """
     nxt = state.get("next")
     if nxt == "MAIL":
         return "mail"
@@ -52,91 +65,77 @@ def supervisor_choice(state: OverallState) -> Literal["mail", "message", "info"]
         return "info"
     return "message"
 
-
 def info_node(state: OverallState) -> OverallState:
-    """
-    The node that retrieves information about Sarthak to inform the agent.
-    """
-    query = state["messages"][-1].content
+    """Retrieve information about the profile owner to inform the agent."""
+    query = _last_user_visible(state)
     response = info_chain.invoke({"query": query})
-    # Add an internal communication message for the downstream message node
-    communication_message = HumanMessage(content=response.message)
-    state["messages"].append(communication_message)
     state["latest_info"] = response.info_message
+    state["intermediate_note"] = response.message  # optional scratch note for message node
     return state
 
-
 def mail_node(state: OverallState) -> OverallState:
-    """
-    The function node to generate the mail content (will result in a tool call if LLM decides).
-    """
-    supervisor_instruction = state["messages"][-1].content
-    response = mail_chain.invoke(
+    """Generate mail content; capture tool-calls compactly if produced."""
+    supervisor_instruction = state.get("supervisor_instruction", "")
+    resp = mail_chain.invoke(
         {
-            "visible_messages": state["visible_messages"],
+            "visible_messages": state.get("visible_messages", []),
             "employer_name": state["name"],
             "employer_email": state["email"],
             "supervisor_instruction": supervisor_instruction,
         }
     )
-    # The response here is an AIMessage that may include tool_calls
-    state["messages"].append(response)
+    tool_calls = getattr(resp, "tool_calls", None) or []
+    state["pending_tools"] = [
+        {"id": tc.get("id"), "name": tc.get("name"), "args": tc.get("args")}
+        for tc in tool_calls
+    ]
+    state["last_mail_ai_text"] = getattr(resp, "content", "")
     return state
 
-
 def choose_tools_or_messages(state: OverallState) -> Literal["message", "mail_tool"]:
-    """
-    Decide whether to execute a tool call from the last AI message or move on to the message node.
-    """
-    last_message = state["messages"][-1]
-    tool_calls = getattr(last_message, "tool_calls", None)
-
-    if tool_calls:
-        # Notify Sarthak via a direct mail that a mail was generated
-        transcript = get_visible_transcript(state["visible_messages"])
+    pending = state.get("pending_tools") or []
+    if pending:
+        # Notify the profile owner via a direct mail that a mail was generated
+        transcript = get_visible_transcript(state.get("visible_messages", []))
         notify = (
             f"A mail was generated for mail id: {state['email']} and name: {state['name']}.\n\n"
             f"Conversation so far:\n{transcript}"
         )
-        _ = send_direct_mail(notify, "sarthakkakkar2021@gmail.com")
+        _ = send_direct_mail(notify, PROFILE_OWNER_EMAIL)
         return "mail_tool"
-
-    # No tool call produced; let the employer know something went wrong and continue as message
-    state["messages"].append(HumanMessage(content="Mail node failed to call the mail tool"))
+    # log event; continue to message
+    state.setdefault("events", []).append({"type": "mail", "status": "no_tool_call"})
     return "message"
 
-
 def mail_tool_node(state: OverallState) -> OverallState:
-    """
-    Tool node for the mail function, invokes the send_mail tool calls produced by the LLM.
-    """
-    last = state["messages"][-1]
-    for tool_call in getattr(last, "tool_calls", []) or []:
-        # Map tool name to function (only one tool here)
-        observation = send_mail.invoke(tool_call["args"])
-        tool_result = ToolMessage(content=observation, tool_call_id=tool_call["id"])
-        state["messages"].append(tool_result)
+    """Execute pending send_mail tool-calls and log compact results."""
+    for tc in state.get("pending_tools", []) or []:
+        try:
+            observation = send_mail.invoke(tc.get("args", {}))
+            state.setdefault("events", []).append(
+                {"type": "tool_result", "tool": tc.get("name"), "result": str(observation), "id": tc.get("id")}
+            )
+        except Exception as e:
+            state.setdefault("events", []).append(
+                {"type": "tool_error", "tool": tc.get("name"), "error": str(e), "id": tc.get("id")}
+            )
+    # clear after execution
+    state["pending_tools"] = []
     return state
 
-
 def message_node(state: OverallState) -> OverallState:
-    """
-    Formats and generates the final message back to the employer.
-    """
-    invisible_conversation = _contents(state["messages"])
-    visible_conversation = state["visible_messages"]
+    """Formats and generates the final message back to the employer."""
+    lc_msgs = _build_lc_messages(state.get("visible_messages", []), k=6)
 
     response = message_chain.invoke(
         {
-            "visible_conversation": visible_conversation,
-            "invisible_conversation": invisible_conversation,
-            "info": state["latest_info"],
+            "visible_conversation": state.get("visible_messages", []),
+            "invisible_conversation": [m.content for m in lc_msgs],
+            "info": state.get("latest_info", ""),
             "employer_name": state["name"],
         }
     )
 
-    state["visible_messages"].append("Bot_Message: " + response.chat_response)
-    state["messages"].append(
-        HumanMessage(content="Responded to the employer with the message: " + response.chat_response)
-    )
+    _append_ai(state, response.chat_response)
+    _prune_state(state)
     return state

@@ -11,8 +11,9 @@ from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import ToolNode
 from pydantic.v1 import BaseModel, Field
 from langchain_core.tools import tool
+from .information import PROFILE_OWNER_EMAIL, PROFILE_OWNER_NAME
 
-from configs import set_env, deepseek_api_key, bot_mail_id, bot_mail_password
+from .configs import set_env, deepseek_api_key, bot_mail_id, bot_mail_password
 
 set_env()
 logger = logging.getLogger(__name__)
@@ -86,11 +87,11 @@ mail_parser = PydanticOutputParser(pydantic_object=MailResponse)
 
 mail_prompt = PromptTemplate(
     template=(
-        "You are an AI system assisting Sarthak Kakkar in professional communication with a potential employer.\n"
+        f"You are an AI system assisting {PROFILE_OWNER_NAME} in professional communication with a potential employer.\n"
         "Your task is to draft a clear, professional email based on the following instruction:\n"
         "{supervisor_instruction}\n\n"
         "Compose the email as an AI entity acting on the employer's request to you.\n"
-        "Address the summary to sarthakkakkar2021@gmail.com.\n\n"
+        f"Address the summary to {PROFILE_OWNER_EMAIL}.\n\n"
         "Include:\n"
         "- Employer Name: {employer_name}\n"
         "- Employer Email: {employer_email}\n\n"
@@ -119,17 +120,4 @@ mail_llm = ChatOpenAI(
 # The LLM will emit a tool call (send_mail) when appropriate.
 mail_chain = mail_prompt | mail_llm
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    demo = mail_chain.invoke(
-        {
-            "visible_messages": "tell sarthak to reach out to me",
-            "employer_name": "Holdman",
-            "employer_email": "holdman@gmail.com",
-            "supervisor_instruction": (
-                "Prepare an email to Sarthak with the employer's request to connect; "
-                "include a brief summary of the conversation so far."
-            ),
-        }
-    )
-    print(demo)
+
