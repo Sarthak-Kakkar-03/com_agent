@@ -1,17 +1,16 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+// src/App.jsx
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./components/Login/Login.jsx";
-
-function Chat() {
-  return <div>Chat</div>; // your real component here
-}
+import Chat from "./components/Chat/Chat.jsx";
 
 export default function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen">
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/login/:id" element={<Chat />} />
+          <Route path="/login/chat" element={<Chat />} />
         </Routes>
       </BrowserRouter>
     </div>

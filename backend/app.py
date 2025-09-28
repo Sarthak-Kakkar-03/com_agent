@@ -8,7 +8,7 @@ NextStep = Literal["MAIL","INFO","MESSAGE","supervisor"]
 
 class ConversationState(BaseModel):
     name: str
-    email: EmailStr
+    email: str
     visible_messages: List[str] = Field(default_factory=list)
     summary: str = ""
     latest_info: str = "No info collected yet"
