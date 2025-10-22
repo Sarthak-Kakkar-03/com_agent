@@ -29,7 +29,7 @@ class StepOutput(BaseModel):
     next: NextStep
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["https://communication-assistant.netlify.app"], allow_methods=["*"], allow_headers=["*"])
 GRAPH = build_graph()
 
 @app.post("/chat", response_model=StepOutput)
