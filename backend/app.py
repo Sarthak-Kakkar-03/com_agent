@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List, Literal, Dict, Any
-from agent_graph import build_graph
+from agent_graph import build_graph, settings
 
 NextStep = Literal["MAIL","INFO","MESSAGE","supervisor"]
 
@@ -45,3 +45,13 @@ def step(request: StepInput):
         display_message=display,
         next=result.get("next","supervisor"),
     )
+    
+@app.get("/debug/env")
+def debug_env():
+    return {
+        "DEEPSEEK_API_KEY": bool(settings.DEEPSEEK_API_KEY),
+        "LANGCHAIN_API_KEY": bool(settings.LANGCHAIN_API_KEY),
+        "BOT_MAIL_ID": settings.BOT_MAIL_ID,
+        "BOT_MAIL_PASSWORD": "*****" if settings.BOT_MAIL_PASSWORD else None,
+    }
+
