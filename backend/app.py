@@ -54,4 +54,9 @@ def debug_env():
         "BOT_MAIL_ID": settings.BOT_MAIL_ID,
         "BOT_MAIL_PASSWORD": "*****" if settings.BOT_MAIL_PASSWORD else None,
     }
+    
+@app.get("/health")
+def health():
+    return {"ok": True}
+
 
