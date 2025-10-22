@@ -34,14 +34,14 @@ GRAPH = build_graph()
 
 @app.post("/chat", response_model=StepOutput)
 def step(request: StepInput):
-    st: Dict[str, Any] = request.state.model_dump()  # use .dict() on pydantic v1
+    st: Dict[str, Any] = request.state.dict() 
     if request.user_text:
         st.setdefault("visible_messages", []).append(request.user_text)
     result: Dict[str, Any] = GRAPH.invoke(st)
     vm = result.get("visible_messages", [])
     display = vm[-1] if vm else ""
     return StepOutput(
-        state=ConversationState.model_validate(result),
+        state=ConversationState.parse_obj(result),
         display_message=display,
         next=result.get("next","supervisor"),
     )

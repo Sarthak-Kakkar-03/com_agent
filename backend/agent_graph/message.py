@@ -6,10 +6,10 @@ from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.pydantic_v1 import BaseModel, Field
 from .information import PROFILE_OWNER_NAME
+from .settings import settings
+settings.export_to_environ()
+deepseek_api_key = settings.DEEPSEEK_API_KEY
 
-from .configs import set_env, deepseek_api_key
-
-set_env()
 logger = logging.getLogger(__name__)
 
 

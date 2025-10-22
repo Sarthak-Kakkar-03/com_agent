@@ -12,10 +12,12 @@ from langgraph.prebuilt import ToolNode
 from pydantic.v1 import BaseModel, Field
 from langchain_core.tools import tool
 from .information import PROFILE_OWNER_EMAIL, PROFILE_OWNER_NAME
+from .settings import settings
 
-from .configs import set_env, deepseek_api_key, bot_mail_id, bot_mail_password
-
-set_env()
+settings.export_to_environ()
+deepseek_api_key = settings.DEEPSEEK_API_KEY
+bot_mail_id = settings.BOT_MAIL_ID
+bot_mail_password = settings.BOT_MAIL_PASSWORD
 logger = logging.getLogger(__name__)
 
 

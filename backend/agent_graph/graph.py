@@ -26,6 +26,7 @@ def build_graph():
     workflow.add_node("message", message_node)
 
     workflow.set_entry_point("supervisor")
+    workflow.set_finish_point("message")
     workflow.add_conditional_edges("supervisor", supervisor_choice, {
         "info": "info",
         "mail": "mail",

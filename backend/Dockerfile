@@ -1,6 +1,12 @@
-# Instructions for the backend run
+FROM python:3.11-slim
 
-FROM python:3.10
 WORKDIR /app
-RUN pip install -r requirements.txt
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+ENV PORT=8080
+EXPOSE 8080
+
+CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8080", "--workers", "3", "app:app"]

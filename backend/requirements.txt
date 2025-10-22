@@ -1,10 +1,12 @@
 streamlit
-langchain
+langchain==0.1.20
+langchain-core==0.1.52
 langgraph
 langchain_openai
 jupyter
 pyppeteer
 fastapi
 uvicorn
-pydantic
+pydantic<2
 pydantic[email]
+python-dotenv
