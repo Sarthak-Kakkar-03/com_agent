@@ -111,6 +111,7 @@ export default function Chat() {
               onChange={(e) => setMsg(e.target.value)}
               disabled={busy}
               p={2}
+              className={busy ? "animate-textFlash" : ""}
             />
             <Button type="submit" colorScheme="blue" isLoading={busy}>
               Send
