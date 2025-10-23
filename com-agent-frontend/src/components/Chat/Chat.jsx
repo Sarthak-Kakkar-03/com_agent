@@ -76,7 +76,7 @@ export default function Chat() {
           </Text>
           <Box borderWidth="1px" borderRadius="md" p="3" maxH="50vh" overflowY="auto">
             {messages.length === 0 ? (
-              <Text color="gray.600" fontSize="sm">No messages yet. Say hello!</Text>
+              <Text color="white" fontSize="sm">Hi! I’m Sarthak Kakkar’s Communication Assistant. Ask about him or request that he contact you.</Text>
             ) : (
               messages.map((m, i) => {
                 const str = typeof m === "string" ? m : String(m ?? "");
