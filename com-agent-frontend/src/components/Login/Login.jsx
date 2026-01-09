@@ -39,6 +39,8 @@ export default function Login() {
               placeholder="John Doe"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              color="white"
+              _placeholder={{ color: "gray.400" }}
               required
             />
           </Box>
@@ -50,6 +52,8 @@ export default function Login() {
               placeholder="me@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              color="white"
+              _placeholder={{ color: "gray.400" }}
               required
             />
           </Box>

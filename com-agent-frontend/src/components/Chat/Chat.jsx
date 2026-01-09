@@ -110,6 +110,8 @@ export default function Chat() {
               value={msg}
               onChange={(e) => setMsg(e.target.value)}
               disabled={busy}
+              color="white"
+              _placeholder={{ color: "gray.400" }}
               p={2}
               className={busy ? "animate-textFlash" : ""}
             />
