@@ -11,3 +11,4 @@ pydantic<2
 pydantic[email]
 python-dotenv
 gunicorn
+requests

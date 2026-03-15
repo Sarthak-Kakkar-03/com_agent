@@ -8,6 +8,8 @@ load_dotenv(override=False)
 class Settings:
     # Third-party keys
     DEEPSEEK_API_KEY: str | None = os.getenv("DEEPSEEK_API_KEY")
+    RETRIEVAL_API_KEY: str | None = os.getenv("RETRIEVAL_API_KEY")
+    RETRIEVAL_ENDPOINT: str | None = os.getenv("RETRIEVAL_ENDPOINT")
     LANGCHAIN_TRACING_V2: str | None = os.getenv("LANGCHAIN_TRACING_V2", "true")
     LANGCHAIN_ENDPOINT: str | None = os.getenv("LANGCHAIN_ENDPOINT", "https://api.smith.langchain.com")
     LANGCHAIN_API_KEY: str | None = os.getenv("LANGCHAIN_API_KEY")

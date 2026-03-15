@@ -1,11 +1,11 @@
-# info_agent.py
 import logging
+
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
-from .information import PROFILE_TEXT
+from pydantic import BaseModel, Field
+import requests
 
-from langchain_core.pydantic_v1 import BaseModel, Field
 from .settings import settings
 
 settings.export_to_environ()
@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 info_llm = ChatOpenAI(
     model="deepseek-chat",
     openai_api_key=deepseek_api_key,
-    openai_api_base="https://api.deepseek.com/beta",
-    temperature=0.7,
+    openai_api_base="https://api.deepseek.com/v1",
+    temperature=0.2,
     timeout=None,
     max_retries=2,
     api_key=deepseek_api_key,
@@ -41,12 +41,45 @@ info_prompt = PromptTemplate(
         "Request: {query}\n\n"
         "{format_instructions}"
     ),
-    input_variables=["query"],
-    partial_variables={
-        "format_instructions": info_parser.get_format_instructions(),
-        "profile": PROFILE_TEXT,
-    },
+    input_variables=["query", "profile"],
+    partial_variables={"format_instructions": info_parser.get_format_instructions()},
 )
 
-info_chain = info_prompt | info_llm | info_parser
 
+def _fetch_profile(query: str) -> str:
+    if not settings.RETRIEVAL_ENDPOINT:
+        return ""
+
+    headers = {
+        "Authorization": f"Bearer {settings.RETRIEVAL_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    try:
+        response = requests.post(
+            settings.RETRIEVAL_ENDPOINT,
+            headers=headers,
+            json={"query": query, "top_k": 5},
+            timeout=20,
+        )
+        response.raise_for_status()
+        data = response.json()
+    except Exception:
+        logger.exception("Failed to retrieve profile context")
+        return ""
+
+    results = data.get("results", [])
+    chunks = [item.get("text", "").strip() for item in results if isinstance(item, dict) and item.get("text")]
+    return "\n".join(chunks)
+
+
+class InfoChain:
+    def invoke(self, inputs: dict) -> InfoResponse:
+        query = str(inputs.get("query", "")).strip()
+        profile = _fetch_profile(query)
+        if not profile:
+            return InfoResponse(info_message="Not available", message="Not available")
+        return (info_prompt | info_llm | info_parser).invoke({"query": query, "profile": profile})
+
+
+info_chain = InfoChain()
