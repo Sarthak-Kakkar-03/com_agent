@@ -68,7 +68,12 @@ def supervisor_choice(state: OverallState) -> Literal["mail", "message", "info"]
 def info_node(state: OverallState) -> OverallState:
     """Retrieve information about the profile owner to inform the agent."""
     query = _last_user_visible(state)
-    response = info_chain.invoke({"query": query})
+    response = info_chain.invoke(
+        {
+            "query": query,
+            "supervisor_instruction": state.get("supervisor_instruction", ""),
+        }
+    )
     state["latest_info"] = response.info_message
     state["intermediate_note"] = response.message  # optional scratch note for message node
     return state

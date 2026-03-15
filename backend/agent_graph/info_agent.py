@@ -37,18 +37,23 @@ info_prompt = PromptTemplate(
     template=(
         "{profile}\n\n"
         "Based on the following request, provide only the information asked.\n"
+        "Supervisor instruction: {supervisor_instruction}\n\n"
         "If the information isn't present in the profile above, return exactly: Not available\n\n"
         "Request: {query}\n\n"
         "{format_instructions}"
     ),
-    input_variables=["query", "profile"],
+    input_variables=["query", "profile", "supervisor_instruction"],
     partial_variables={"format_instructions": info_parser.get_format_instructions()},
 )
 
 
-def _fetch_profile(query: str) -> str:
+def _fetch_profile(query: str, supervisor_instruction: str) -> str:
     if not settings.RETRIEVAL_ENDPOINT:
         return ""
+
+    retrieval_query = query
+    if supervisor_instruction:
+        retrieval_query = f"{query}\n\nSupervisor instruction: {supervisor_instruction}"
 
     headers = {
         "Authorization": f"Bearer {settings.RETRIEVAL_API_KEY}",
@@ -59,7 +64,7 @@ def _fetch_profile(query: str) -> str:
         response = requests.post(
             settings.RETRIEVAL_ENDPOINT,
             headers=headers,
-            json={"query": query, "top_k": 5},
+            json={"query": retrieval_query, "top_k": 5},
             timeout=20,
         )
         response.raise_for_status()
@@ -76,10 +81,17 @@ def _fetch_profile(query: str) -> str:
 class InfoChain:
     def invoke(self, inputs: dict) -> InfoResponse:
         query = str(inputs.get("query", "")).strip()
-        profile = _fetch_profile(query)
+        supervisor_instruction = str(inputs.get("supervisor_instruction", "")).strip()
+        profile = _fetch_profile(query, supervisor_instruction)
         if not profile:
             return InfoResponse(info_message="Not available", message="Not available")
-        return (info_prompt | info_llm | info_parser).invoke({"query": query, "profile": profile})
+        return (info_prompt | info_llm | info_parser).invoke(
+            {
+                "query": query,
+                "profile": profile,
+                "supervisor_instruction": supervisor_instruction,
+            }
+        )
 
 
 info_chain = InfoChain()
