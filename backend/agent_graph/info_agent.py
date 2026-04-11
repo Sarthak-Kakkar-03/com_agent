@@ -36,21 +36,25 @@ info_parser = PydanticOutputParser(pydantic_object=InfoResponse)
 
 info_prompt = PromptTemplate(
     template=(
-        "{profile}\n\n"
+        "You are answering using retrieved database chunks about the profile owner.\n"
+        "The context below is not a single profile object. It is a set of text chunks retrieved from a database.\n"
+        "Use only the chunk text that is relevant to the request.\n\n"
+        "Retrieved chunks:\n"
+        "CHUNK: {chunks}\n\n"
         "Based on the following request, provide only the information asked.\n"
         "Supervisor instruction: {supervisor_instruction}\n\n"
-        "If the information isn't present in the profile above, return exactly: Not available\n\n"
+        "If the information isn't present in the retrieved chunks, return exactly: Not available\n\n"
         "Request: {query}\n\n"
         "{format_instructions}"
     ),
-    input_variables=["query", "profile", "supervisor_instruction"],
+    input_variables=["query", "chunks", "supervisor_instruction"],
     partial_variables={"format_instructions": info_parser.get_format_instructions()},
 )
 
 
-def _fetch_profile(query: str, supervisor_instruction: str) -> str:
+def _fetch_chunks(query: str, supervisor_instruction: str) -> str:
     if not settings.RETRIEVAL_ENDPOINT:
-        return PROFILE_TEXT
+        return f"[Chunk 1]\n{PROFILE_TEXT}"
 
     retrieval_query = query
     if supervisor_instruction:
@@ -72,25 +76,32 @@ def _fetch_profile(query: str, supervisor_instruction: str) -> str:
         data = response.json()
     except Exception:
         logger.exception("Failed to retrieve profile context, falling back to local profile")
-        return PROFILE_TEXT
+        return f"[Chunk 1]\n{PROFILE_TEXT}"
 
     results = data.get("results", [])
-    chunks = [item.get("text", "").strip() for item in results if isinstance(item, dict) and item.get("text")]
-    profile = "\n".join(chunks)
-    return profile or PROFILE_TEXT
+    chunks = []
+    for idx, item in enumerate(results, start=1):
+        if not isinstance(item, dict):
+            continue
+        text = item.get("text", "").strip()
+        if text:
+            chunks.append(f"[Chunk {idx}]\n{text}")
+
+    chunks_text = "\n\n".join(chunks)
+    return chunks_text or f"[Chunk 1]\n{PROFILE_TEXT}"
 
 
 class InfoChain:
     def invoke(self, inputs: dict) -> InfoResponse:
         query = str(inputs.get("query", "")).strip()
         supervisor_instruction = str(inputs.get("supervisor_instruction", "")).strip()
-        profile = _fetch_profile(query, supervisor_instruction)
-        if not profile:
+        chunks = _fetch_chunks(query, supervisor_instruction)
+        if not chunks:
             return InfoResponse(info_message="Not available", message="Not available")
         return (info_prompt | info_llm | info_parser).invoke(
             {
                 "query": query,
-                "profile": profile,
+                "chunks": chunks,
                 "supervisor_instruction": supervisor_instruction,
             }
         )
