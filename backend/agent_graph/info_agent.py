@@ -6,6 +6,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 import requests
 
+from .information import PROFILE_TEXT
 from .settings import settings
 
 settings.export_to_environ()
@@ -49,7 +50,7 @@ info_prompt = PromptTemplate(
 
 def _fetch_profile(query: str, supervisor_instruction: str) -> str:
     if not settings.RETRIEVAL_ENDPOINT:
-        return ""
+        return PROFILE_TEXT
 
     retrieval_query = query
     if supervisor_instruction:
@@ -65,17 +66,18 @@ def _fetch_profile(query: str, supervisor_instruction: str) -> str:
             settings.RETRIEVAL_ENDPOINT,
             headers=headers,
             json={"query": retrieval_query, "top_k": 5},
-            timeout=20,
+            timeout=50,
         )
         response.raise_for_status()
         data = response.json()
     except Exception:
-        logger.exception("Failed to retrieve profile context")
-        return ""
+        logger.exception("Failed to retrieve profile context, falling back to local profile")
+        return PROFILE_TEXT
 
     results = data.get("results", [])
     chunks = [item.get("text", "").strip() for item in results if isinstance(item, dict) and item.get("text")]
-    return "\n".join(chunks)
+    profile = "\n".join(chunks)
+    return profile or PROFILE_TEXT
 
 
 class InfoChain:
