@@ -5,7 +5,7 @@ import Chat from "./components/Chat/Chat.jsx";
 
 export default function App() {
   return (
-    <div className="min-h-screen text-white">
+    <div className="min-h-screen text-slate-950">
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
