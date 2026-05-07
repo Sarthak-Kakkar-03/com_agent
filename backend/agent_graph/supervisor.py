@@ -4,13 +4,10 @@ import logging
 from typing import Literal
 
 from langchain_core.output_parsers import PydanticOutputParser
-from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
 from .information import PROFILE_OWNER_NAME
-from .settings import settings
-settings.export_to_environ()
-deepseek_api_key = settings.DEEPSEEK_API_KEY
+from .deepseek import deepseek_chat
 
 logger = logging.getLogger(__name__)
 
@@ -29,14 +26,10 @@ class SupervisorResponse(BaseModel):
 
 supervisor_parser = PydanticOutputParser(pydantic_object=SupervisorResponse)
 
-supervisor_llm = ChatOpenAI(
-    model="deepseek-chat",
-    openai_api_key=deepseek_api_key,
-    openai_api_base="https://api.deepseek.com/v1",
-    temperature=0.3,  # more deterministic routing
-    timeout=None,
-    max_retries=2,
-    api_key=deepseek_api_key,
+supervisor_llm = deepseek_chat(
+    temperature=0,
+    max_tokens=700,
+    json_mode=True,
 )
 
 supervisor_prompt = PromptTemplate(
@@ -50,6 +43,8 @@ supervisor_prompt = PromptTemplate(
         f"3. Choose 'MESSAGE' if the request is neither an email-send request nor information about {PROFILE_OWNER_NAME}.\n\n"
         "CONTEXT\n"
         "Latest conversation with the employer till this point: {visible_messages}\n\n"
+        "Return one valid json object and no markdown. Example json output:\n"
+        '{{"supervisor_message":"Route this request to the info agent.","next":"INFO","display_message":"I am delegating this to the info agent because the employer asked about Sarthak."}}\n\n'
         "Return strictly following the format instructions.\n"
         "{format_instructions}"
     ),
