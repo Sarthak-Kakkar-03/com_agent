@@ -189,7 +189,7 @@ export default function Chat() {
                 variant="unstyled"
                 className={busy ? "animate-textFlash" : ""}
               />
-              <Button type="submit" isLoading={busy} isDisabled={!msg.trim()} className="send-button">
+              <Button type="submit" loading={busy} disabled={!msg.trim()} className="send-button">
                 <FiSend aria-hidden="true" />
                 Send
               </Button>
