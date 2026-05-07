@@ -116,7 +116,7 @@ export default function Login() {
 
             <Button
               type="submit"
-              isDisabled={!name.trim() || !email.trim()}
+              disabled={!name.trim() || !email.trim()}
               className="primary-action"
             >
               Enter chat <FiArrowRight aria-hidden="true" />
