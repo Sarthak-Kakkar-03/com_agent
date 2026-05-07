@@ -106,10 +106,24 @@ export default function Chat() {
 
           <div className="prompt-card">
             <p>Good opening prompts</p>
-            <button type="button" onClick={() => setMsg("What available data do you have about Sarthak?")}>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                if (busy) return;
+                setMsg("What available data do you have about Sarthak?");
+              }}
+            >
               Available data <FiArrowUpRight aria-hidden="true" />
             </button>
-            <button type="button" onClick={() => setMsg("Please ask Sarthak to reach out to me by email.")}>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                if (busy) return;
+                setMsg("Please ask Sarthak to reach out to me by email.");
+              }}
+            >
               Email Sarthak <FiArrowUpRight aria-hidden="true" />
             </button>
           </div>

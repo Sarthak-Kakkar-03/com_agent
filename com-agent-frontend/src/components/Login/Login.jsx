@@ -87,6 +87,7 @@ export default function Login() {
                 <FiUser aria-hidden="true" />
                 <Input
                   id="name"
+                  autoComplete="name"
                   placeholder="John Doe"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -103,6 +104,7 @@ export default function Login() {
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="email"
                   placeholder="me@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

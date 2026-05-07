@@ -8,7 +8,7 @@
   color: #e5edf4;
   background: #080b10;
   font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  text-rendering: optimizelegibility;
 }
 
 * {
@@ -526,7 +526,7 @@ a {
 }
 
 .message-bubble.typing {
-  animation: pulseBubble 1.2s ease-in-out infinite;
+  animation: pulse-bubble 1.2s ease-in-out infinite;
 }
 
 .composer {
@@ -556,7 +556,7 @@ a {
   padding: 0 1rem !important;
 }
 
-@keyframes pulseBubble {
+@keyframes pulse-bubble {
   0%,
   100% {
     opacity: 0.72;
