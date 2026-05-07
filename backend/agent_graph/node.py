@@ -114,22 +114,35 @@ def choose_tools_or_messages(state: OverallState) -> Literal["message", "mail_to
 
 def mail_tool_node(state: OverallState) -> OverallState:
     """Execute pending send_mail tool-calls and log compact results."""
+    sent = False
     for tc in state.get("pending_tools", []) or []:
         try:
             observation = send_mail.invoke(tc.get("args", {}))
             state.setdefault("events", []).append(
                 {"type": "tool_result", "tool": tc.get("name"), "result": str(observation), "id": tc.get("id")}
             )
+            if str(observation).lower() == "email sent":
+                sent = True
         except Exception as e:
             state.setdefault("events", []).append(
                 {"type": "tool_error", "tool": tc.get("name"), "error": str(e), "id": tc.get("id")}
             )
+    if sent:
+        state["intermediate_note"] = (
+            f"Mail has already been sent to Sarthak with the employer's logged-in email address ({state['email']}). "
+            "Confirm the mail was sent. Do not ask for the employer's email address."
+        )
     # clear after execution
     state["pending_tools"] = []
     return state
 
 def message_node(state: OverallState) -> OverallState:
     """Formats and generates the final message back to the employer."""
+    if state.get("intermediate_note", "").startswith("Mail has already been sent"):
+        _append_ai(state, "I have sent the email to Sarthak.")
+        _prune_state(state)
+        return state
+
     lc_msgs = _build_lc_messages(state.get("visible_messages", []), k=6)
 
     response = message_chain.invoke(
@@ -138,6 +151,9 @@ def message_node(state: OverallState) -> OverallState:
             "invisible_conversation": [m.content for m in lc_msgs],
             "info": state.get("latest_info", ""),
             "employer_name": state["name"],
+            "employer_email": state["email"],
+            "intermediate_note": state.get("intermediate_note", ""),
+            "events": state.get("events", []),
         }
     )
 

@@ -31,9 +31,15 @@ message_prompt = PromptTemplate(
         "and the latest info retrieved by"
         f"the information agent. Maintain professional tone, keep replies concise, and only discuss {PROFILE_OWNER_NAME}.\n\n"
         f"Politely refuse requests that are not about {PROFILE_OWNER_NAME}.\n\n"
+        "The employer already provided their name and email during login. The employer email is always present and valid.\n"
+        "Never ask for their email address.\n"
+        "If an internal note says mail has been sent, only confirm that the mail was sent.\n\n"
         "Visible conversation (latest messages first or in order given):\n{visible_conversation}\n\n"
         "Latest info from info agent: {info}\n"
         "Employer name: {employer_name}\n\n"
+        "Employer email from login: {employer_email}\n"
+        "Internal note: {intermediate_note}\n"
+        "Event log: {events}\n\n"
         "Return one valid json object and no markdown. Example json output:\n"
         '{{"chat_response":"Thanks for asking. Sarthak has experience building AI systems."}}\n\n'
         "{format_instructions}"
@@ -43,6 +49,9 @@ message_prompt = PromptTemplate(
         "invisible_conversation",
         "info",
         "employer_name",
+        "employer_email",
+        "intermediate_note",
+        "events",
     ],
     partial_variables={"format_instructions": message_parser.get_format_instructions()},
 )

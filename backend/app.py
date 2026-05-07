@@ -8,7 +8,7 @@ NextStep = Literal["MAIL","INFO","MESSAGE","supervisor"]
 
 class ConversationState(BaseModel):
     name: str
-    email: str
+    email: EmailStr
     visible_messages: List[str] = Field(default_factory=list)
     summary: str = ""
     latest_info: str = "No info collected yet"
@@ -58,5 +58,4 @@ def debug_env():
 @app.get("/health")
 def health():
     return {"ok": True}
-
 
