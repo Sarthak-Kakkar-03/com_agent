@@ -27,8 +27,10 @@ export default function Chat() {
     return null;
   });
   const [msg, setMsg] = useState("");
+  const [pendingUserMessage, setPendingUserMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const endRef = useRef(null);
+  const sendingRef = useRef(false);
 
   useEffect(() => {
     if (!conv?.name || !conv?.email) navigate("/login", { replace: true });
@@ -42,26 +44,36 @@ export default function Chat() {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   });
 
-  const messages = useMemo(() => (conv?.visible_messages ?? []), [conv]);
+  const messages = useMemo(() => {
+    const visible = conv?.visible_messages ?? [];
+    if (!pendingUserMessage || visible[visible.length - 1] === pendingUserMessage) return visible;
+    return [...visible, pendingUserMessage];
+  }, [conv, pendingUserMessage]);
 
   async function send(e) {
     e.preventDefault();
-    if (!msg.trim() || !conv || busy) return;
+    const userText = msg.trim();
+    if (!userText || !conv || busy || sendingRef.current) return;
+    sendingRef.current = true;
+    setPendingUserMessage(userText);
+    setMsg("");
     setBusy(true);
     try {
       const res = await fetch(`${API_BASE}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ state: conv, user_text: msg.trim() }),
+        body: JSON.stringify({ state: conv, user_text: userText }),
       });
       if (!res.ok) throw new Error(`API ${res.status}`);
       const data = await res.json();
       setConv(data.state);
-      setMsg("");
     } catch (err) {
       console.error(err);
+      setMsg(userText);
       alert("Failed to send message. Check backend URL or CORS.");
     } finally {
+      sendingRef.current = false;
+      setPendingUserMessage("");
       setBusy(false);
     }
   }
@@ -189,7 +201,7 @@ export default function Chat() {
                 variant="unstyled"
                 className={busy ? "animate-textFlash" : ""}
               />
-              <Button type="submit" loading={busy} disabled={!msg.trim()} className="send-button">
+              <Button type="submit" loading={busy} disabled={busy || !msg.trim()} className="send-button">
                 <FiSend aria-hidden="true" />
                 Send
               </Button>
