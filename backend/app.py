@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from typing import Optional, List, Literal, Dict, Any
 from agent_graph import build_graph, settings
 
@@ -8,7 +8,7 @@ NextStep = Literal["MAIL","INFO","MESSAGE","supervisor"]
 
 class ConversationState(BaseModel):
     name: str
-    email: EmailStr
+    email: str
     visible_messages: List[str] = Field(default_factory=list)
     summary: str = ""
     latest_info: str = "No info collected yet"
@@ -58,4 +58,3 @@ def debug_env():
 @app.get("/health")
 def health():
     return {"ok": True}
-
