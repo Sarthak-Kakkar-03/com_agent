@@ -42,5 +42,3 @@ def build_graph():
     workflow.add_edge("info", "message")
 
     return workflow.compile()
-
-

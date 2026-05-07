@@ -8,6 +8,8 @@ load_dotenv(override=False)
 class Settings:
     # Third-party keys
     DEEPSEEK_API_KEY: str | None = os.getenv("DEEPSEEK_API_KEY")
+    DEEPSEEK_BASE_URL: str = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+    DEEPSEEK_MODEL: str = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
     RETRIEVAL_API_KEY: str | None = os.getenv("RETRIEVAL_API_KEY")
     RETRIEVAL_ENDPOINT: str | None = os.getenv("RETRIEVAL_ENDPOINT")
     LANGCHAIN_TRACING_V2: str | None = os.getenv("LANGCHAIN_TRACING_V2", "true")

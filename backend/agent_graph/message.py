@@ -3,12 +3,9 @@ import logging
 
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
 from langchain_core.pydantic_v1 import BaseModel, Field
 from .information import PROFILE_OWNER_NAME
-from .settings import settings
-settings.export_to_environ()
-deepseek_api_key = settings.DEEPSEEK_API_KEY
+from .deepseek import deepseek_chat
 
 logger = logging.getLogger(__name__)
 
@@ -21,14 +18,10 @@ class MessageResponse(BaseModel):
 
 message_parser = PydanticOutputParser(pydantic_object=MessageResponse)
 
-message_llm = ChatOpenAI(
-    model="deepseek-chat",
-    openai_api_key=deepseek_api_key,
-    openai_api_base="https://api.deepseek.com/v1",
-    temperature=0.7,  # a bit more stable for templated replies
-    timeout=None,
-    max_retries=2,
-    api_key=deepseek_api_key,
+message_llm = deepseek_chat(
+    temperature=0.3,
+    max_tokens=900,
+    json_mode=True,
 )
 
 message_prompt = PromptTemplate(
@@ -41,6 +34,8 @@ message_prompt = PromptTemplate(
         "Visible conversation (latest messages first or in order given):\n{visible_conversation}\n\n"
         "Latest info from info agent: {info}\n"
         "Employer name: {employer_name}\n\n"
+        "Return one valid json object and no markdown. Example json output:\n"
+        '{{"chat_response":"Thanks for asking. Sarthak has experience building AI systems."}}\n\n'
         "{format_instructions}"
     ),
     input_variables=[

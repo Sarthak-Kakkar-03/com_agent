@@ -2,26 +2,21 @@ import logging
 
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 import requests
 
 from .information import PROFILE_TEXT
+from .deepseek import deepseek_chat
 from .settings import settings
 
 settings.export_to_environ()
-deepseek_api_key = settings.DEEPSEEK_API_KEY
 logger = logging.getLogger(__name__)
 
 
-info_llm = ChatOpenAI(
-    model="deepseek-chat",
-    openai_api_key=deepseek_api_key,
-    openai_api_base="https://api.deepseek.com/v1",
-    temperature=0.2,
-    timeout=None,
-    max_retries=2,
-    api_key=deepseek_api_key,
+info_llm = deepseek_chat(
+    temperature=0,
+    max_tokens=900,
+    json_mode=True,
 )
 
 
@@ -43,8 +38,10 @@ info_prompt = PromptTemplate(
         "CHUNK: {chunks}\n\n"
         "Based on the following request, provide only the information asked.\n"
         "Supervisor instruction: {supervisor_instruction}\n\n"
-        "If the information isn't present in the retrieved chunks, return exactly: Not available\n\n"
+        "If the information isn't present in the retrieved chunks, return exactly: Not available in both json fields.\n\n"
         "Request: {query}\n\n"
+        "Return one valid json object and no markdown. Example json output:\n"
+        '{{"info_message":"Sarthak has experience building AI systems.","message":"Use the retrieved AI systems detail in the employer-facing response."}}\n\n'
         "{format_instructions}"
     ),
     input_variables=["query", "chunks", "supervisor_instruction"],
